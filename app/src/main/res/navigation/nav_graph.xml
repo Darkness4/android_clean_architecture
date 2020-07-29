@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph.xml"
+    app:startDestination="@id/githubFragment">
+
+    <fragment
+        android:id="@+id/githubFragment"
+        android:name="marc.nguyen.cleanarchitecture.presentation.ui.fragments.GithubFragment"
+        android:label="GithubFragment">
+        <argument
+            android:name="user"
+            app:argType="string" />
+    </fragment>
+    <argument
+        android:name="user"
+        android:defaultValue="Darkness4" />
+</navigation>
