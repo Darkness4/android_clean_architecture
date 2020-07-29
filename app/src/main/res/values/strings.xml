@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Clean Architecture</string>
+    <string name="instructions">Write the repository name here !</string>
+    <string name="usernameHint">username</string>
+    <string name="find_action">FIND</string>
 </resources>

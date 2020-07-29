@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph.xml"
-    app:startDestination="@id/githubFragment">
+    app:startDestination="@id/queryFragment">
 
     <fragment
         android:id="@+id/githubFragment"
         android:name="marc.nguyen.cleanarchitecture.presentation.ui.fragments.GithubFragment"
-        android:label="GithubFragment">
+        android:label="GithubFragment"
+        tools:layout="@layout/github_fragment">
         <argument
             android:name="user"
             app:argType="string" />
@@ -15,4 +17,13 @@
     <argument
         android:name="user"
         android:defaultValue="Darkness4" />
+    <fragment
+        android:id="@+id/queryFragment"
+        android:name="marc.nguyen.cleanarchitecture.presentation.ui.fragments.QueryFragment"
+        android:label="QueryFragment"
+        tools:layout="@layout/query_fragment">
+        <action
+            android:id="@+id/action_queryFragment_to_githubFragment"
+            app:destination="@id/githubFragment" />
+    </fragment>
 </navigation>

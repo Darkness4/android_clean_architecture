@@ -6,12 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import marc.nguyen.cleanarchitecture.core.exception.DataException
 import marc.nguyen.cleanarchitecture.domain.usecases.RefreshReposByUser
 import marc.nguyen.cleanarchitecture.domain.usecases.WatchReposByUser
-import timber.log.Timber
 
 class GithubViewModel(
     user: String,
@@ -25,7 +24,8 @@ class GithubViewModel(
     val isNetworkErrorShown: LiveData<Boolean>
         get() = _isNetworkErrorShown
 
-    val repos = watchReposByUser(user).onEach { Timber.i(it.toString()) }.asLiveData()
+    val repos = watchReposByUser(user)
+        .asLiveData(Dispatchers.Main + viewModelScope.coroutineContext)
 
     init {
         refreshDataFromRepository(user)
