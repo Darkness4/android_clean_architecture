@@ -1,19 +1,12 @@
 package marc.nguyen.cleanarchitecture.presentation.util
 
 import android.view.View
+import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import marc.nguyen.cleanarchitecture.domain.entities.Repo
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
-
-@BindingAdapter("isNetworkError", "data")
-fun hideIfNetworkError(view: View, isNetWorkError: Boolean, data: Any?) {
-    view.visibility = if (data != null) View.GONE else View.VISIBLE
-
-    if (isNetWorkError) {
-        view.visibility = View.GONE
-    }
-}
+import marc.nguyen.cleanarchitecture.presentation.viewmodels.GithubViewModel
 
 @BindingAdapter("listData")
 fun bindRecyclerView(
@@ -22,4 +15,38 @@ fun bindRecyclerView(
 ) {
     val adapter = recyclerView.adapter as GithubAdapter
     adapter.submitList(data)
+}
+
+@BindingAdapter("isLoading")
+fun showIfLoading(view: View, state: GithubViewModel.State?) {
+    state?.let {
+        view.visibility = if (state == GithubViewModel.State.Loading) View.VISIBLE else View.GONE
+    }
+}
+
+@BindingAdapter("isLoaded")
+fun showIfLoaded(view: View, state: GithubViewModel.State?) {
+    state?.let {
+        view.visibility = if (state == GithubViewModel.State.Loaded) View.VISIBLE else View.GONE
+    }
+}
+
+@BindingAdapter("isError")
+fun showIfError(view: View, state: GithubViewModel.State?) {
+    state?.let {
+        view.visibility = if (state is GithubViewModel.State.Error) View.VISIBLE else View.GONE
+    }
+}
+
+@BindingAdapter("isError")
+fun showIfError(view: TextView, state: GithubViewModel.State?) {
+    state?.let {
+        if (state is GithubViewModel.State.Error) {
+            view.visibility = View.VISIBLE
+            view.text = state.e.localizedMessage
+        } else {
+            view.visibility = View.GONE
+            view.text = ""
+        }
+    }
 }

@@ -41,7 +41,7 @@ class QueryFragment : Fragment() {
                 ).show()
             }
         }
-        binding.repositoryInput.doAfterTextChanged {
+        binding.repositoryInputEditText.doAfterTextChanged {
             if (viewModel.user.value.isNullOrBlank()) {
                 binding.repositoryInput.error = getString(R.string.username_is_empty_error)
             } else {

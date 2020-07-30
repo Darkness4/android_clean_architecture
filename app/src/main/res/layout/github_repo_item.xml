@@ -9,13 +9,45 @@
             type="marc.nguyen.cleanarchitecture.domain.entities.Repo" />
     </data>
 
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:padding="2dp"
-        android:text="@{repo.fullName}"
-        tools:text="username/repository" />
+        android:layout_margin="8dp"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{repo.fullName}"
+                android:textAppearance="?attr/textAppearanceHeadline6"
+                tools:text="username/repository" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@{repo.htmlUrl}"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="https://github.com/username/repository" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@{repo.description}"
+                android:textAppearance="?attr/textAppearanceBody2"
+                android:textColor="?android:attr/textColorSecondary"
+                tools:text="Description Blah Blah Blah" />
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 </layout>

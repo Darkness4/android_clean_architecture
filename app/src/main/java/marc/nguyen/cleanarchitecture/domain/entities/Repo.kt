@@ -7,13 +7,17 @@ data class Repo(
     val id: Int,
     val name: String,
     val fullName: String,
-    val owner: User
+    val owner: User,
+    val htmlUrl: String,
+    val description: String?
 ) : ModelMappable<RepoModel> {
     override fun asModel() =
         RepoModel(
             id = this.id,
             name = this.name,
             fullName = this.fullName,
-            owner = this.owner.asModel()
+            owner = this.owner.asModel(),
+            htmlUrl = this.htmlUrl,
+            description = description
         )
 }

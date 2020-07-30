@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">Clean Architecture</string>
     <string name="instructions">Write a Github username/organization here !</string>
-    <string name="usernameHint">username</string>
+    <string name="usernameHint">Username</string>
     <string name="find_action">FIND</string>
     <string name="username_is_empty_error">Enter the username</string>
     <string name="username_is_empty_toast">Username is empty</string>
+    <string name="error_icon_description">Show an error icon</string>
 </resources>

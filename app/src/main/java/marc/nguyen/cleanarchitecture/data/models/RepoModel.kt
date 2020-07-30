@@ -16,13 +16,17 @@ data class RepoModel(
     val id: Int,
     val name: String,
     @ColumnInfo(name = "full_name") @Json(name = "full_name") val fullName: String,
-    @Embedded(prefix = "owner_") val owner: UserModel
+    @Embedded(prefix = "owner_") val owner: UserModel,
+    @ColumnInfo(name = "html_url") @Json(name = "html_url") val htmlUrl: String,
+    val description: String?
 ) : DomainMappable<Repo> {
     override fun asEntity(): Repo =
         Repo(
             id = this.id,
             name = this.name,
             fullName = this.fullName,
-            owner = this.owner.asEntity()
+            owner = this.owner.asEntity(),
+            htmlUrl = this.htmlUrl,
+            description = this.description
         )
 }
