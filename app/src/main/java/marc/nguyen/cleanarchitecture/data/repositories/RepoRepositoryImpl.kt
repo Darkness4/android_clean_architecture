@@ -1,6 +1,8 @@
 package marc.nguyen.cleanarchitecture.data.repositories
 
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import marc.nguyen.cleanarchitecture.core.exception.CacheException
 import marc.nguyen.cleanarchitecture.core.exception.HttpCallFailureException
 import marc.nguyen.cleanarchitecture.core.exception.NoNetworkException
 import marc.nguyen.cleanarchitecture.core.exception.ServerUnreachableException
@@ -19,6 +21,7 @@ class RepoRepositoryImpl @Inject constructor(
     private val local: RepoDao
 ) : RepoRepository {
     override fun watchReposByUser(user: String) = local.watchReposByUser(user)
+        .catch { throw CacheException(it) }
         .map { repos -> repos.map { it.asEntity() } }
 
     override suspend fun refreshReposByUser(user: String) {

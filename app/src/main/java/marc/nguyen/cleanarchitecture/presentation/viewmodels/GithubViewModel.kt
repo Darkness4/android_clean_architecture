@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import marc.nguyen.cleanarchitecture.core.exception.DataException
@@ -20,7 +21,7 @@ class GithubViewModel(
 ) : ViewModel() {
     sealed class State {
         object Loaded : State()
-        data class Error(val e: DataException) : State()
+        data class Error(val e: Exception) : State()
         object Loading : State()
     }
 
@@ -29,15 +30,17 @@ class GithubViewModel(
     val state: LiveData<State>
         get() = _state
 
-    // Used for toast
-    private var _isNetworkErrorShown = MutableLiveData<Boolean>(false)
-    val isNetworkErrorShown: LiveData<Boolean>
-        get() = _isNetworkErrorShown
-
     val repos = watchReposByUser(user)
         .onEach {
             if (!it.isNullOrEmpty()) {
                 _state.value = State.Loaded
+            }
+        }
+        .catch {
+            when (it) {
+                is DataException -> _state.value = State.Error(it)
+                is Exception -> _state.value = State.Error(it)
+                else -> throw it
             }
         }
         .asLiveData(Dispatchers.Main + viewModelScope.coroutineContext)
@@ -51,17 +54,12 @@ class GithubViewModel(
             try {
                 _state.value = State.Loading
                 refreshReposByUser(user)
-                _isNetworkErrorShown.value = false
             } catch (e: DataException) {
                 if (repos.value.isNullOrEmpty()) {
                     _state.value = State.Error(e)
                 }
             }
         }
-    }
-
-    fun onNetworkErrorShown() {
-        _isNetworkErrorShown.value = true
     }
 
     class Factory(
