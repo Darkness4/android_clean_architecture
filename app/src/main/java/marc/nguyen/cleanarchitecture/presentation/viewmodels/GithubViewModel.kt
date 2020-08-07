@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import com.squareup.inject.assisted.Assisted
+import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onEach
@@ -14,8 +16,8 @@ import marc.nguyen.cleanarchitecture.core.exception.DataException
 import marc.nguyen.cleanarchitecture.domain.usecases.RefreshReposByUser
 import marc.nguyen.cleanarchitecture.domain.usecases.WatchReposByUser
 
-class GithubViewModel(
-    user: String,
+class GithubViewModel @AssistedInject constructor(
+    @Assisted private val user: String,
     private val refreshReposByUser: RefreshReposByUser,
     watchReposByUser: WatchReposByUser
 ) : ViewModel() {
@@ -62,17 +64,20 @@ class GithubViewModel(
         }
     }
 
-    class Factory(
-        private val user: String,
-        private val refreshReposByUser: RefreshReposByUser,
-        private val watchReposByUser: WatchReposByUser
-    ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            if (modelClass.isAssignableFrom(GithubViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return GithubViewModel(user, refreshReposByUser, watchReposByUser) as T
+    @AssistedInject.Factory
+    interface AssistedFactory {
+        fun create(user: String): GithubViewModel
+    }
+
+    companion object {
+        @Suppress("UNCHECKED_CAST")
+        fun provideFactory(
+            assistedFactory: AssistedFactory,
+            user: String
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+                return assistedFactory.create(user) as T
             }
-            throw IllegalArgumentException("Unable to construct viewmodel")
         }
     }
 }
