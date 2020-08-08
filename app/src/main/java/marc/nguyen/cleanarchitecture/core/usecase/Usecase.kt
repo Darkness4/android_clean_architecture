@@ -14,5 +14,5 @@ interface Usecase<in Params, out Type> {
 }
 
 interface FlowUsecase<in Params, out Type> {
-    operator fun invoke(params: Params): Flow<Type>
+    operator fun invoke(params: Params): Flow<Result<Type>>
 }
