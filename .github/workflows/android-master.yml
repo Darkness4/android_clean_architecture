@@ -18,7 +18,9 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Gradle
-      run: ./gradlew build
+      run: |
+        chmod +x gradlew
+        ./gradlew build
 
   test:
 
@@ -31,4 +33,6 @@ jobs:
       with:
         java-version: 1.8
     - name: Test with Gradle
-      run: ./gradlew test
+      run: |
+        chmod +x gradlew
+        ./gradlew test
