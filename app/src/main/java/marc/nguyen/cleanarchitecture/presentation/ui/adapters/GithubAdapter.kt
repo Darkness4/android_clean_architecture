@@ -27,10 +27,8 @@ class GithubAdapter(private val onClickListener: OnClickListener) :
     }
 
     class ViewHolder(
-        private var binding:
-        GithubRepoItemBinding
-    ) :
-        RecyclerView.ViewHolder(binding.root) {
+        private var binding: GithubRepoItemBinding
+    ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(repo: Repo) {
             binding.repo = repo
             binding.executePendingBindings()

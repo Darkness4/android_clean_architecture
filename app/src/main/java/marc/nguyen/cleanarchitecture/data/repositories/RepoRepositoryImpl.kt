@@ -19,10 +19,10 @@ class RepoRepositoryImpl @Inject constructor(
     private val remote: GithubDataSource,
     private val local: RepoDao
 ) : RepoRepository {
-    override fun watchReposByUser(user: String) = local.watchReposByUser(user)
+    override fun watchAllByUser(user: String) = local.watchReposByUser(user)
         .map { repos -> repos.map { it.asEntity() } }
 
-    override suspend fun refreshReposByUser(user: String) {
+    override suspend fun refreshAllByUser(user: String) {
         try {
             val repos = remote.getReposByUser(user)
             local.insertAll(repos)

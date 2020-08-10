@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.Flow
  * case in the application should implement this contract).
  */
 interface Usecase<in Params, out Type> {
-    suspend operator fun invoke(params: Params): Type
+    suspend operator fun invoke(params: Params): Result<Type>
 
-    class None
+    object None
 }
 
 interface FlowUsecase<in Params, out Type> {

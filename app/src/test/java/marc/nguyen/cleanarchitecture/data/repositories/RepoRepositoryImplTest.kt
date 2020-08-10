@@ -42,7 +42,7 @@ class RepoRepositoryImplTest : WordSpec({
             every { local.watchReposByUser("user") } returns flowOf(repos)
 
             // Act
-            val result = repoRepository.watchReposByUser("user").first()
+            val result = repoRepository.watchAllByUser("user").first()
 
             // Assert
             result shouldBe repos.map { it.asEntity() }
@@ -60,7 +60,7 @@ class RepoRepositoryImplTest : WordSpec({
             coEvery { local.insertAll(any()) } returns Unit
 
             // Act
-            repoRepository.refreshReposByUser("user")
+            repoRepository.refreshAllByUser("user")
 
             // Assert
             coVerify { local.insertAll(repos) }
@@ -72,7 +72,7 @@ class RepoRepositoryImplTest : WordSpec({
 
             // Act and Assert
             shouldThrow<NoNetworkException> {
-                repoRepository.refreshReposByUser("user")
+                repoRepository.refreshAllByUser("user")
             }
         }
 
@@ -83,7 +83,7 @@ class RepoRepositoryImplTest : WordSpec({
 
             // Act and Assert
             shouldThrow<ServerUnreachableException> {
-                repoRepository.refreshReposByUser("user")
+                repoRepository.refreshAllByUser("user")
             }
         }
 
@@ -98,7 +98,7 @@ class RepoRepositoryImplTest : WordSpec({
 
             // Act and Assert
             shouldThrow<HttpCallFailureException> {
-                repoRepository.refreshReposByUser("user")
+                repoRepository.refreshAllByUser("user")
             }
         }
 
@@ -108,7 +108,7 @@ class RepoRepositoryImplTest : WordSpec({
 
             // Act and Assert
             shouldThrow<NetworkException> {
-                repoRepository.refreshReposByUser("user")
+                repoRepository.refreshAllByUser("user")
             }
         }
     }

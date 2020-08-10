@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import marc.nguyen.cleanarchitecture.domain.entities.Repo
 
 interface RepoRepository {
-    fun watchReposByUser(user: String): Flow<List<Repo>>
+    fun watchAllByUser(user: String): Flow<List<Repo>>
 
-    suspend fun refreshReposByUser(user: String)
+    suspend fun refreshAllByUser(user: String)
 }

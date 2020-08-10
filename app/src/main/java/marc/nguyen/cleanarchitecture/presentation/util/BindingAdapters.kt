@@ -7,45 +7,58 @@ import androidx.recyclerview.widget.RecyclerView
 import marc.nguyen.cleanarchitecture.domain.entities.Repo
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
 
-@BindingAdapter("listData")
-fun bindRecyclerView(
+@BindingAdapter("state")
+fun bindGithubAdapter(
     recyclerView: RecyclerView,
-    data: List<Repo>?
+    result: Result<List<Repo>>?
 ) {
     val adapter = recyclerView.adapter as GithubAdapter
-    adapter.submitList(data)
+    if (result != null) {
+        adapter.submitList(result.getOrElse { emptyList() })
+    }
 }
 
 @BindingAdapter("isLoading")
-fun showIfLoading(view: View, state: State?) {
-    state?.let {
-        view.visibility = if (state is State.Loading) View.VISIBLE else View.GONE
-    }
+fun showIfLoading(view: View, result: Result<List<Repo>>?) {
+    view.visibility = if (result == null) View.VISIBLE else View.GONE
 }
 
 @BindingAdapter("isLoaded")
-fun showIfLoaded(view: View, state: State?) {
-    state?.let {
-        view.visibility = if (state is State.Loaded<*>) View.VISIBLE else View.GONE
+fun showIfLoaded(view: View, result: Result<List<Repo>>?) {
+    view.visibility = if (result != null) {
+         result.fold(
+            { View.VISIBLE },
+            { View.GONE }
+        )
+    } else {
+        View.GONE
     }
 }
 
 @BindingAdapter("isError")
-fun showIfError(view: View, state: State?) {
-    state?.let {
-        view.visibility = if (state is State.Error) View.VISIBLE else View.GONE
+fun showIfError(view: View, result: Result<List<Repo>>?) {
+    view.visibility = if (result != null) {
+        result.fold(
+            { View.GONE },
+            { View.VISIBLE }
+        )
+    } else {
+        View.GONE
     }
 }
 
 @BindingAdapter("isError")
-fun showIfError(view: TextView, state: State?) {
-    state?.let {
-        if (state is State.Error) {
-            view.visibility = View.VISIBLE
-            view.text = state.e.localizedMessage
-        } else {
-            view.visibility = View.GONE
-            view.text = ""
-        }
+fun showIfError(view: TextView, result: Result<List<Repo>>?) {
+    if (result != null) {
+        result.fold(
+            {
+                view.visibility = View.GONE
+                view.text = ""
+            },
+            {
+                view.visibility = View.VISIBLE
+                view.text = it.localizedMessage
+            }
+        )
     }
 }

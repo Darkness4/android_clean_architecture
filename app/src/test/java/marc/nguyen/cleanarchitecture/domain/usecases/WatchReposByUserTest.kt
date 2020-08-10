@@ -4,31 +4,30 @@ import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
 import io.mockk.clearAllMocks
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import marc.nguyen.cleanarchitecture.core.exception.CacheException
-import marc.nguyen.cleanarchitecture.core.exception.NetworkException
+import marc.nguyen.cleanarchitecture.core.usecase.FlowUsecase
+import marc.nguyen.cleanarchitecture.domain.entities.Repo
 import marc.nguyen.cleanarchitecture.domain.repositories.RepoRepository
 import marc.nguyen.cleanarchitecture.utils.TestUtil
 
 class WatchReposByUserTest : WordSpec({
     val repoRepository = mockk<RepoRepository>()
-    val watchReposByUser = WatchReposByUser(repoRepository)
+    val watchReposByUser: FlowUsecase<String, List<Repo>> = WatchReposByUser(repoRepository)
 
     beforeTest {
         clearAllMocks()
     }
 
     "invoke" should {
-        "emit data with cache data and network success" {
+        "emit data with cache data" {
             // Arrange
             val repos = listOf(TestUtil.createRepo(0))
-            coEvery { repoRepository.refreshReposByUser(any()) } returns Unit
-            every { repoRepository.watchReposByUser(any()) } returns flowOf(repos)
+            every { repoRepository.watchAllByUser(any()) } returns flowOf(repos)
 
             // Act
             val result = watchReposByUser("user").first()
@@ -38,37 +37,21 @@ class WatchReposByUserTest : WordSpec({
             result.getOrNull() shouldBe repos
         }
 
-        "emit data with cache data and network failure" {
+        "emit failure on empty cache" {
             // Arrange
-            val repos = listOf(TestUtil.createRepo(0))
-            coEvery { repoRepository.refreshReposByUser(any()) } throws NetworkException(Exception())
-            every { repoRepository.watchReposByUser(any()) } returns flowOf(repos)
-
-            // Act
-            val result = watchReposByUser("user").first()
-
-            // Assert
-            result.isSuccess shouldBe true
-            result.getOrNull() shouldBe repos
-        }
-
-        "emit failure on network failure" {
-            // Arrange
-            coEvery { repoRepository.refreshReposByUser(any()) } throws NetworkException(Exception())
-            every { repoRepository.watchReposByUser(any()) } returns flowOf(emptyList())
+            every { repoRepository.watchAllByUser(any()) } returns flowOf(emptyList())
 
             // Act
             val result = watchReposByUser("user").first()
 
             // Assert
             result.isFailure shouldBe true
-            result.exceptionOrNull().shouldBeTypeOf<NetworkException>()
+            result.exceptionOrNull().shouldBeTypeOf<CacheException>()
         }
 
         "emit failure on cache failure" {
             // Arrange
-            coEvery { repoRepository.refreshReposByUser(any()) } returns Unit
-            every { repoRepository.watchReposByUser(any()) } returns flow {
+            every { repoRepository.watchAllByUser(any()) } returns flow {
                 throw Exception()
             }
 

@@ -9,32 +9,36 @@ import androidx.lifecycle.viewModelScope
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import marc.nguyen.cleanarchitecture.domain.entities.Repo
+import marc.nguyen.cleanarchitecture.domain.usecases.RefreshReposByUser
 import marc.nguyen.cleanarchitecture.domain.usecases.WatchReposByUser
-import marc.nguyen.cleanarchitecture.presentation.util.State
 
 class GithubViewModel @AssistedInject constructor(
     @Assisted private val user: String,
+    private val refreshReposByUser: RefreshReposByUser,
     watchReposByUser: WatchReposByUser
 ) : ViewModel() {
-    // RefreshData's state
-    private var _state = MutableLiveData<State>(State.Loading)
-    val state: LiveData<State>
-        get() = _state
+    private val _networkStatus = MutableLiveData<Result<Unit>>()
+    val networkStatus: LiveData<Result<Unit>>
+        get() = _networkStatus
 
-    val repos = watchReposByUser(user)
-        .map { result ->
-            result.fold(
-                {
-                    _state.value = State.Loaded(it)
-                    it
-                },
-                {
-                    _state.value = State.Error(it)
-                    emptyList()
-                }
-            )
-        }.asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+    val state: LiveData<Result<List<Repo>>> = watchReposByUser(user)
+        .asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+
+    init {
+        refreshRepos()
+    }
+
+    fun refreshRepos() {
+        viewModelScope.launch {
+            _networkStatus.value = refreshReposByUser(user)
+        }
+    }
+
+    fun refreshReposDone() {
+        _networkStatus.value = null
+    }
 
     @AssistedInject.Factory
     interface AssistedFactory {
@@ -42,11 +46,11 @@ class GithubViewModel @AssistedInject constructor(
     }
 
     companion object {
-        @Suppress("UNCHECKED_CAST")
         fun provideFactory(
             assistedFactory: AssistedFactory,
             user: String
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel?> create(modelClass: Class<T>): T {
                 return assistedFactory.create(user) as T
             }
