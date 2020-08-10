@@ -28,7 +28,5 @@ object DomainModule {
 @InstallIn(ApplicationComponent::class)
 abstract class DomainBindModule {
     @Binds
-    abstract fun bindRepoRepository(
-        repoRepositoryImpl: RepoRepositoryImpl
-    ): RepoRepository
+    abstract fun bindRepoRepository(repoRepositoryImpl: RepoRepositoryImpl): RepoRepository
 }

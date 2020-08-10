@@ -6,11 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import arrow.core.Either
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import marc.nguyen.cleanarchitecture.domain.entities.Repo
 import marc.nguyen.cleanarchitecture.domain.usecases.RefreshReposByUser
 import marc.nguyen.cleanarchitecture.domain.usecases.WatchReposByUser
 
@@ -19,25 +19,34 @@ class GithubViewModel @AssistedInject constructor(
     private val refreshReposByUser: RefreshReposByUser,
     watchReposByUser: WatchReposByUser
 ) : ViewModel() {
-    private val _networkStatus = MutableLiveData<Result<Unit>>()
-    val networkStatus: LiveData<Result<Unit>>
+    private val _networkStatus = MutableLiveData<Either<Throwable, Unit>>()
+    val networkStatus: LiveData<Either<Throwable, Unit>>
         get() = _networkStatus
 
-    val state: LiveData<Result<List<Repo>>> = watchReposByUser(user)
+    val state = watchReposByUser(user)
         .asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+
+    private val _isManuallyRefreshing = MutableLiveData(false)
+    val isManuallyRefreshing
+        get() = _isManuallyRefreshing
 
     init {
         refreshRepos()
     }
 
-    fun refreshRepos() {
+    private fun refreshRepos() {
         viewModelScope.launch {
             _networkStatus.value = refreshReposByUser(user)
         }
     }
 
-    fun refreshReposDone() {
-        _networkStatus.value = null
+    fun manualRefresh() {
+        _isManuallyRefreshing.value = true
+        refreshRepos()
+    }
+
+    fun manualRefreshDone() {
+        _isManuallyRefreshing.value = false
     }
 
     @AssistedInject.Factory

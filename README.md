@@ -14,8 +14,9 @@ See [**build.gradle**](./app/build.gradle) for more details.
 
 ### Dependencies
 
-- Kotlin + stdlib `1.3.72`
+- Kotlin `1.3.72`
 - Android Gradle Plugin `4.0.1` + Databinding enabled
+- Arrow Kt Core `0.10.5` (Functional Programming Library)
 - Hilt `2.28.3-alpha` (DI Library based on Dagger 2)
 - Jetpack Hilt `1.0.0-alpha02`
 - Multidex `2.0.1` (Avoid the 64K methods limit)
@@ -203,27 +204,25 @@ We will prefer the second method as it decrease the app-loading time, according 
 
 ```kotlin
 @Singleton
-class RepoRepositoryImpl @Inject constructor(  // Do not forget to inject the dependencies via Hilt/Dagger 2
+class RepoRepositoryImpl @Inject constructor(
     private val remote: GithubDataSource,
     private val local: RepoDao
 ) : RepoRepository {
-    // This method listen to the database
-    override fun watchReposByUser(user: String) = local.watchReposByUser(user)
+    override fun watchAllByUser(user: String) = local.watchReposByUser(user)
         .map { repos -> repos.map { it.asEntity() } }
 
-    // This method is to refresh the database
-    override suspend fun refreshReposByUser(user: String) {
+    override suspend fun refreshAllByUser(user: String) {
         try {
             val repos = remote.getReposByUser(user)
             local.insertAll(repos)
         } catch (e: SocketTimeoutException) {
-            throw NoNetworkException(e)
+            throw NoNetworkException(e.message)
         } catch (e: UnknownHostException) {
-            throw ServerUnreachableException(e)
+            throw ServerUnreachableException(e.message)
         } catch (e: HttpException) {
-            throw HttpCallFailureException(e)
+            throw HttpCallFailureException(e.message)
         } catch (e: Throwable) {
-            throw NetworkException(e)
+            throw NetworkException(e.message)
         }
     }
 }
@@ -281,69 +280,39 @@ For example, here it is a matter of fetching data either from the cache or from 
 So, you may want to write the tests first before writing your use case :
 
 ```kotlin
-class WatchReposByUserTest : WordSpec({
+class RefreshReposByUserTest : WordSpec({
     val repoRepository = mockk<RepoRepository>()
-    val watchReposByUser: FlowUsecase<String, List<Repo>> = WatchReposByUser(repoRepository)
+    val refreshAllByUser: UseCase<String, Unit> = RefreshReposByUser(repoRepository)
 
     beforeTest {
         clearAllMocks()
     }
 
     "invoke" should {
-        "emit data with cache data and network success" {
+        "return a Unit" {
             // Arrange
-            val repos = listOf(TestUtil.createRepo(0))
             coEvery { repoRepository.refreshAllByUser(any()) } returns Unit
-            every { repoRepository.watchAllByUser(any()) } returns flowOf(repos)
 
             // Act
-            val result = watchReposByUser("user").first()
+            val result = refreshAllByUser("user")
 
             // Assert
-            result.isSuccess shouldBe true
-            result.getOrNull() shouldBe repos
+            result.isRight() shouldBe true
+            result.getOrElse { null } shouldBe Unit
         }
 
-        "emit data with cache data and network failure" {
+        "return failure on throw" {
             // Arrange
-            val repos = listOf(TestUtil.createRepo(0))
-            coEvery { repoRepository.refreshAllByUser(any()) } throws NetworkException(Exception())
-            every { repoRepository.watchAllByUser(any()) } returns flowOf(repos)
+            coEvery { repoRepository.refreshAllByUser(any()) } throws Exception()
 
             // Act
-            val result = watchReposByUser("user").first()
+            val result = refreshAllByUser("user")
 
             // Assert
-            result.isSuccess shouldBe true
-            result.getOrNull() shouldBe repos
-        }
-
-        "emit failure on network failure" {
-            // Arrange
-            coEvery { repoRepository.refreshAllByUser(any()) } throws NetworkException(Exception())
-            every { repoRepository.watchAllByUser(any()) } returns flowOf(emptyList())  // No cache data
-
-            // Act
-            val result = watchReposByUser("user").first()
-
-            // Assert
-            result.isFailure shouldBe true
-            result.exceptionOrNull().shouldBeTypeOf<NetworkException>()
-        }
-
-        "emit failure on cache failure" {
-            // Arrange
-            coEvery { repoRepository.refreshAllByUser(any()) } returns Unit  // Anything
-            every { repoRepository.watchAllByUser(any()) } returns flow {
-                throw Exception()
+            result.isLeft() shouldBe true
+            result.getOrHandle {
+                it.shouldBeTypeOf<Exception>()
             }
-
-            // Act
-            val result = watchReposByUser("user").first()
-
-            // Assert
-            result.isFailure shouldBe true
-            result.exceptionOrNull().shouldBeTypeOf<CacheException>()
         }
     }
 })
@@ -353,46 +322,32 @@ Then, you should implement the use case :
 
 ```kotlin
 @Singleton
-class WatchReposByUser @Inject constructor(private val repoRepository: RepoRepository) :
-    FlowUsecase<String, List<Repo>> {
-    override operator fun invoke(params: String): Flow<Result<List<Repo>>> = flow {
-        val networkResult = kotlin.runCatching {
-            repoRepository.refreshAllByUser(params)
+class RefreshReposByUser @Inject constructor(private val repoRepository: RepoRepository) :
+    UseCase<String, Unit> {
+    override suspend operator fun invoke(params: String): Either<Throwable, Unit> =
+        try {
+            Right(repoRepository.refreshAllByUser(params))
+        } catch (e: Throwable) {
+            Left(e)
         }
-
-        emitAll(
-            repoRepository.watchAllByUser(params).map {  // it: List<Repo>
-                if (it.isNotEmpty()) {
-                    Result.success(it)
-                } else {
-                    Result.failure(
-                        networkResult.exceptionOrNull()
-                            ?: CacheException(Exception("No data available"))
-                    )
-                }
-            }.catch {
-                emit(Result.failure(CacheException(it)))
-            }
-        )
-    }
 }
 ```
 
 Note : This implement a `FlowUsecase` which is :
 
 ```kotlin
-interface FlowUsecase<in Params, out Type> {
-    operator fun invoke(params: Params): Flow<Result<Type>>
+interface FlowUseCase<in Params, out Type> {
+    operator fun invoke(params: Params): Flow<Either<Throwable, Type>>
 }
 ```
 
 If this is a simple call, like a simple `UpdateRepo`, you may prefer to implement `Usecase` instead :
 
 ```kotlin
-interface Usecase<in Params, out Type> {
-    suspend operator fun invoke(params: Params): Result<Type>
+interface UseCase<in Params, out Type> {
+    suspend operator fun invoke(params: Params): Either<Throwable, Type>
 
-    object None  // Empty Params
+    object None
 }
 ```
 
@@ -427,15 +382,25 @@ class GithubFragment : Fragment() {
         val binding: GithubFragmentBinding = GithubFragmentBinding.inflate(inflater)
         binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = viewModel
-        binding.repoList.adapter = GithubAdapter(GithubAdapter.OnClickListener { // it: Repo
-            onClick(it)
+        binding.repoList.adapter = GithubAdapter(GithubAdapter.OnClickListener {
+            openHtmlUrl(it.htmlUrl)
+        })
+        viewModel.networkStatus.observe(viewLifecycleOwner, Observer { result ->
+            result?.getOrHandle {
+                Toast.makeText(
+                    context,
+                    it.localizedMessage,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            viewModel.manualRefreshDone()
         })
 
         return binding.root
     }
 
-    private fun onClick(repo: Repo) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(repo.htmlUrl))
+    private fun openHtmlUrl(htmlUrl: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(htmlUrl))
         startActivity(intent)
     }
 }
@@ -513,26 +478,38 @@ We convert the `Flow` into `LiveData`. We also use a `MutableLiveData` for manag
 ```kotlin
 class GithubViewModel @AssistedInject constructor(
     @Assisted private val user: String,
+    private val refreshReposByUser: RefreshReposByUser,
     watchReposByUser: WatchReposByUser
 ) : ViewModel() {
-    // RefreshData's state
-    private var _state = MutableLiveData<State>(State.Loading)
-    val state: LiveData<State>
-        get() = _state
+    private val _networkStatus = MutableLiveData<Either<Throwable, Unit>>()
+    val networkStatus: LiveData<Either<Throwable, Unit>>
+        get() = _networkStatus
 
-    val repos = watchReposByUser(user)
-        .map { result ->
-            result.fold(
-                {
-                    _state.value = State.Loaded(it)
-                    it
-                },
-                {
-                    _state.value = State.Error(it)
-                    emptyList()
-                }
-            )
-        }.asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+    val state = watchReposByUser(user)
+        .asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+
+    private val _isManuallyRefreshing = MutableLiveData(false)
+    val isManuallyRefreshing
+        get() = _isManuallyRefreshing
+
+    init {
+        refreshRepos()
+    }
+
+    private fun refreshRepos() {
+        viewModelScope.launch {
+            _networkStatus.value = refreshReposByUser(user)
+        }
+    }
+
+    fun manualRefresh() {
+        _isManuallyRefreshing.value = true
+        refreshRepos()
+    }
+
+    fun manualRefreshDone() {
+        _isManuallyRefreshing.value = false
+    }
 
     @AssistedInject.Factory
     interface AssistedFactory {

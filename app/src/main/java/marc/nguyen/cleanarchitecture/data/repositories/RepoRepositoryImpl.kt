@@ -27,13 +27,13 @@ class RepoRepositoryImpl @Inject constructor(
             val repos = remote.getReposByUser(user)
             local.insertAll(repos)
         } catch (e: SocketTimeoutException) {
-            throw NoNetworkException(e)
+            throw NoNetworkException(e.message)
         } catch (e: UnknownHostException) {
-            throw ServerUnreachableException(e)
+            throw ServerUnreachableException(e.message)
         } catch (e: HttpException) {
-            throw HttpCallFailureException(e)
+            throw HttpCallFailureException(e.message)
         } catch (e: Throwable) {
-            throw NetworkException(e)
+            throw NetworkException(e.message)
         }
     }
 }

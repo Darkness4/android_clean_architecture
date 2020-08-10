@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.navArgs
+import arrow.core.getOrHandle
 import dagger.hilt.android.AndroidEntryPoint
 import marc.nguyen.cleanarchitecture.databinding.GithubFragmentBinding
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
@@ -41,14 +42,14 @@ class GithubFragment : Fragment() {
             openHtmlUrl(it.htmlUrl)
         })
         viewModel.networkStatus.observe(viewLifecycleOwner, Observer { result ->
-            result.getOrElse {
+            result?.getOrHandle {
                 Toast.makeText(
                     context,
                     it.localizedMessage,
                     Toast.LENGTH_LONG
                 ).show()
             }
-            viewModel.refreshReposDone()
+            viewModel.manualRefreshDone()
         })
 
         return binding.root

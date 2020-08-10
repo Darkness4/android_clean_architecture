@@ -1,12 +1,12 @@
 package marc.nguyen.cleanarchitecture.core.exception
 
-open class DataException(error: Throwable) : RuntimeException(error)
+open class DataException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
 
-class CacheException(error: Throwable) : DataException(error)
-open class NetworkException(error: Throwable) : DataException(error)
+class CacheException(message: String? = null, cause: Throwable? = null) : DataException(message, cause)
+open class NetworkException(message: String? = null, cause: Throwable? = null) : DataException(message, cause)
 
-class NoNetworkException(error: Throwable) : NetworkException(error)
-class ServerUnreachableException(error: Throwable) : NetworkException(error)
-class HttpCallFailureException(error: Throwable) : NetworkException(error)
+class NoNetworkException(message: String? = null, cause: Throwable? = null) : NetworkException(message, cause)
+class ServerUnreachableException(message: String? = null, cause: Throwable? = null) : NetworkException(message, cause)
+class HttpCallFailureException(message: String? = null, cause: Throwable? = null) : NetworkException(message, cause)
 
 
