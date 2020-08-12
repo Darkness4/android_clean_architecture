@@ -14,8 +14,8 @@ See [**build.gradle**](./app/build.gradle) for more details.
 
 ### Dependencies
 
-- Kotlin `1.4.0-rc`
-- Android Gradle Plugin `4.1.0-rc01` + Databinding enabled
+- Kotlin `1.3.72`
+- Android Gradle Plugin `4.0.1` + Databinding enabled
 - Arrow Kt Core `0.10.5` (Functional Programming Library)
 - Hilt `2.28.3-alpha` (DI Library based on Dagger 2)
 - Jetpack Hilt `1.0.0-alpha02`
