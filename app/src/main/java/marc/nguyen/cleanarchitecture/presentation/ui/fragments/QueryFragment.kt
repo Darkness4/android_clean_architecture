@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import marc.nguyen.cleanarchitecture.R
 import marc.nguyen.cleanarchitecture.databinding.QueryFragmentBinding
@@ -48,14 +47,17 @@ class QueryFragment : Fragment() {
                 binding.repositoryInput.error = null
             }
         }
-        viewModel.navigateToGithub.observe(viewLifecycleOwner, Observer {
-            if (it != null) {
-                findNavController().navigate(
-                    QueryFragmentDirections.actionQueryFragmentToGithubFragment(it)
-                )
-                viewModel.navigateToGithubDone()
+        viewModel.navigateToGithub.observe(
+            viewLifecycleOwner,
+            {
+                if (it != null) {
+                    findNavController().navigate(
+                        QueryFragmentDirections.actionQueryFragmentToGithubFragment(it)
+                    )
+                    viewModel.navigateToGithubDone()
+                }
             }
-        })
+        )
         return binding.root
     }
 }

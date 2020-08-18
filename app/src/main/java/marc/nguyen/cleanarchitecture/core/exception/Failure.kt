@@ -8,5 +8,3 @@ open class NetworkException(message: String? = null, cause: Throwable? = null) :
 class NoNetworkException(message: String? = null, cause: Throwable? = null) : NetworkException(message, cause)
 class ServerUnreachableException(message: String? = null, cause: Throwable? = null) : NetworkException(message, cause)
 class HttpCallFailureException(message: String? = null, cause: Throwable? = null) : NetworkException(message, cause)
-
-

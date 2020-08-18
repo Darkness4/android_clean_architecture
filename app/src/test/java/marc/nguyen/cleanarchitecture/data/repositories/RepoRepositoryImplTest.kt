@@ -76,7 +76,6 @@ class RepoRepositoryImplTest : WordSpec({
             }
         }
 
-
         "throw ServerUnreachableException if ServerUnreachable" {
             // Arrange
             coEvery { remote.getReposByUser("user") } throws UnknownHostException()
