@@ -23,10 +23,10 @@ class GithubFragment : Fragment() {
     private val args by navArgs<GithubFragmentArgs>()
 
     @Inject
-    lateinit var githubViewModelAssistedFactory: GithubViewModel.AssistedFactory
+    lateinit var viewModelFactory: GithubViewModel.AssistedFactory
 
     private val viewModel by viewModels<GithubViewModel> {
-        GithubViewModel.provideFactory(githubViewModelAssistedFactory, args.user)
+        GithubViewModel.Provider(viewModelFactory, args.user)
     }
 
     override fun onCreateView(

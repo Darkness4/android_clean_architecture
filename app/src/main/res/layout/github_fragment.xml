@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:refreshing="@{viewModel.isManuallyRefreshing}"
-            app:onRefreshListener="@{viewModel.manualRefresh}">
+            app:onRefreshListener="@{viewModel::manualRefresh}">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/repo_list"

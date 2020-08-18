@@ -50,19 +50,17 @@ class GithubViewModel @AssistedInject constructor(
     }
 
     @AssistedInject.Factory
-    interface AssistedFactory {
+    fun interface AssistedFactory {
         fun create(user: String): GithubViewModel
     }
 
-    companion object {
-        fun provideFactory(
-            assistedFactory: AssistedFactory,
-            user: String
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return assistedFactory.create(user) as T
-            }
+    class Provider(
+        private val assistedFactory: AssistedFactory,
+        private val user: String
+    ): ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            return assistedFactory.create(user) as T
         }
     }
 }

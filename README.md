@@ -14,13 +14,12 @@ See [**build.gradle**](./app/build.gradle) for more details.
 
 ### Dependencies
 
-- Kotlin `1.3.72`
+- Kotlin `1.4.0`
 - Android Gradle Plugin `4.0.1` + Databinding enabled
 - Arrow Kt Core `0.10.5` (Functional Programming Library)
 - Hilt `2.28.3-alpha` (DI Library based on Dagger 2)
-- Jetpack Hilt `1.0.0-alpha02`
 - Multidex `2.0.1` (Avoid the 64K methods limit)
-- Kotlin Coroutines `1.3.8`
+- Kotlin Coroutines `1.3.9`
 - Android KTX `1.3.1`
 - Room KTX `2.2.5`
 - Lifecycle KTX (LiveData + ViewModel) `2.2.0`
@@ -31,7 +30,7 @@ See [**build.gradle**](./app/build.gradle) for more details.
 
 ### Test dependencies
 
-- Kotest `4.1.3` + JUnit 5
+- Kotest `4.2.0.RC2` + JUnit 5
 - MockK `1.10.0`
 
 ### Instrumented test dependencies
