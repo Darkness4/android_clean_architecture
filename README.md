@@ -30,12 +30,12 @@ See [**build.gradle**](./app/build.gradle) for more details.
 
 ### Test dependencies
 
-- Kotest `4.2.0.RC2` + JUnit 5
+- Kotest `4.2.0` + JUnit 5
 - MockK `1.10.0`
 
 ### Instrumented test dependencies
 
-- AndroidX Test `1.3.0-rc03`
+- AndroidX Test `1.3.0`
 - Hilt Testing
 - JUnit Assertions
 - Espresso Core

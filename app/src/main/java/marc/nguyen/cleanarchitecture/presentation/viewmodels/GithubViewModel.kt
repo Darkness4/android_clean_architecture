@@ -50,7 +50,7 @@ class GithubViewModel @AssistedInject constructor(
     }
 
     @AssistedInject.Factory
-    interface AssistedFactory {
+    fun interface AssistedFactory {
         fun create(user: String): GithubViewModel
     }
 

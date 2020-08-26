@@ -2,7 +2,7 @@
 buildscript {
     ext {
         kotlin_version = '1.4.0'
-        android_gradle_plugin_version = '4.0.1'
+        android_gradle_plugin_version = '4.1.0-rc01'
         nav_version = '2.3.0'
         hilt_version = '2.28.3-alpha'
     }
