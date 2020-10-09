@@ -1,5 +1,6 @@
 package marc.nguyen.cleanarchitecture.data.repositories
 
+import dagger.Lazy
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
@@ -17,19 +18,23 @@ import marc.nguyen.cleanarchitecture.core.exception.ServerUnreachableException
 import marc.nguyen.cleanarchitecture.data.database.RepoDao
 import marc.nguyen.cleanarchitecture.data.datasources.GithubDataSource
 import marc.nguyen.cleanarchitecture.utils.TestUtil
-import okhttp3.ResponseBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
 import retrofit2.Response
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 class RepoRepositoryImplTest : WordSpec({
+    val remoteLazy = mockk<Lazy<GithubDataSource>>()
     val remote = mockk<GithubDataSource>()
+    val localLazy = mockk<Lazy<RepoDao>>()
     val local = mockk<RepoDao>()
-    val repoRepository = RepoRepositoryImpl(remote, local)
+    val repoRepository = RepoRepositoryImpl(remoteLazy, localLazy)
 
     beforeTest {
         clearAllMocks()
+        every { remoteLazy.get() } returns remote
+        every { localLazy.get() } returns local
     }
 
     "watchReposByUser" should {
@@ -91,7 +96,7 @@ class RepoRepositoryImplTest : WordSpec({
             coEvery { remote.getReposByUser("user") } throws HttpException(
                 Response.error<Unit>(
                     404,
-                    ResponseBody.create(null, "Not Found")
+                    "Not Found".toResponseBody()
                 )
             )
 

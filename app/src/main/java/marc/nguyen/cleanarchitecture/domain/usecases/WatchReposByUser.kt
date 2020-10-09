@@ -3,6 +3,7 @@ package marc.nguyen.cleanarchitecture.domain.usecases
 import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
+import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -15,11 +16,11 @@ import javax.inject.Singleton
 
 @Singleton
 class WatchReposByUser @Inject constructor(
-    private val repoRepository: RepoRepository
+    private val repoRepository: Lazy<RepoRepository>
 ) :
     FlowUseCase<String, List<Repo>> {
     override operator fun invoke(params: String): Flow<Either<Throwable, List<Repo>>> =
-        repoRepository.watchAllByUser(params).map {
+        repoRepository.get().watchAllByUser(params).map {
             if (it.isNotEmpty()) {
                 Right(it)
             } else {

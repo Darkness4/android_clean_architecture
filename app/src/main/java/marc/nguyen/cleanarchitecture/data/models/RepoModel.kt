@@ -4,20 +4,20 @@ import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import marc.nguyen.cleanarchitecture.core.mappers.DomainMappable
 import marc.nguyen.cleanarchitecture.domain.entities.Repo
 
 @Entity(tableName = "repos")
-@JsonClass(generateAdapter = true)
+@Serializable
 data class RepoModel(
     @PrimaryKey
     val id: Int,
     val name: String,
-    @ColumnInfo(name = "full_name") @Json(name = "full_name") val fullName: String,
+    @ColumnInfo(name = "full_name") @SerialName("full_name") val fullName: String,
     @Embedded(prefix = "owner_") val owner: UserModel,
-    @ColumnInfo(name = "html_url") @Json(name = "html_url") val htmlUrl: String,
+    @ColumnInfo(name = "html_url") @SerialName("html_url") val htmlUrl: String,
     val description: String?
 ) : DomainMappable<Repo> {
     override fun asEntity(): Repo =

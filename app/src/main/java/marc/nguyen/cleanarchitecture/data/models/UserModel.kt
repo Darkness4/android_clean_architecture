@@ -1,10 +1,10 @@
 package marc.nguyen.cleanarchitecture.data.models
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 import marc.nguyen.cleanarchitecture.core.mappers.DomainMappable
 import marc.nguyen.cleanarchitecture.domain.entities.User
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class UserModel(
     val id: Int,
     val login: String

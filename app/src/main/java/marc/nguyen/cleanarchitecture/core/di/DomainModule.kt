@@ -1,6 +1,7 @@
 package marc.nguyen.cleanarchitecture.core.di
 
 import dagger.Binds
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -11,22 +12,22 @@ import marc.nguyen.cleanarchitecture.domain.usecases.RefreshReposByUser
 import marc.nguyen.cleanarchitecture.domain.usecases.WatchReposByUser
 import javax.inject.Singleton
 
-@Module
+@Module(includes = [DomainModule.Provider::class])
 @InstallIn(ApplicationComponent::class)
-object DomainModule {
-    @Singleton
-    @Provides
-    fun provideWatchReposByUser(repoRepository: RepoRepository) = WatchReposByUser(repoRepository)
-
-    @Singleton
-    @Provides
-    fun provideRefreshReposByUser(repoRepository: RepoRepository) =
-        RefreshReposByUser(repoRepository)
-}
-
-@Module
-@InstallIn(ApplicationComponent::class)
-abstract class DomainBindModule {
+interface DomainModule {
     @Binds
-    abstract fun bindRepoRepository(repoRepositoryImpl: RepoRepositoryImpl): RepoRepository
+    fun bindRepoRepository(repoRepositoryImpl: RepoRepositoryImpl): RepoRepository
+
+    @Module
+    @InstallIn(ApplicationComponent::class)
+    object Provider {
+        @Singleton
+        @Provides
+        fun provideWatchReposByUser(repoRepository: Lazy<RepoRepository>) = WatchReposByUser(repoRepository)
+
+        @Singleton
+        @Provides
+        fun provideRefreshReposByUser(repoRepository: Lazy<RepoRepository>) =
+            RefreshReposByUser(repoRepository)
+    }
 }

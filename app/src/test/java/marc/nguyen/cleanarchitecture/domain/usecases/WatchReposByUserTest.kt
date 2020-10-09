@@ -2,6 +2,7 @@ package marc.nguyen.cleanarchitecture.domain.usecases
 
 import arrow.core.getOrElse
 import arrow.core.getOrHandle
+import dagger.Lazy
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeTypeOf
@@ -18,11 +19,13 @@ import marc.nguyen.cleanarchitecture.domain.repositories.RepoRepository
 import marc.nguyen.cleanarchitecture.utils.TestUtil
 
 class WatchReposByUserTest : WordSpec({
+    val repoRepositoryLazy = mockk<Lazy<RepoRepository>>()
     val repoRepository = mockk<RepoRepository>()
-    val watchReposByUser: FlowUseCase<String, List<Repo>> = WatchReposByUser(repoRepository)
+    val watchReposByUser: FlowUseCase<String, List<Repo>> = WatchReposByUser(repoRepositoryLazy)
 
     beforeTest {
         clearAllMocks()
+        every { repoRepositoryLazy.get() } returns repoRepository
     }
 
     "invoke" should {

@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.Flow
  */
 interface UseCase<in Params, out Type> {
     suspend operator fun invoke(params: Params): Either<Throwable, Type>
-
-    object None
 }
 
 interface FlowUseCase<in Params, out Type> {

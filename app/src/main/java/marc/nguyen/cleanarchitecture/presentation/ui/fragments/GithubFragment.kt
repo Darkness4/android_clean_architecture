@@ -22,7 +22,7 @@ class GithubFragment : Fragment() {
     private val args by navArgs<GithubFragmentArgs>()
 
     @Inject
-    lateinit var viewModelFactory: GithubViewModel.AssistedFactory
+    lateinit var viewModelFactory: GithubViewModel.Factory
 
     private val viewModel by viewModels<GithubViewModel> {
         GithubViewModel.Provider(viewModelFactory, args.user)
