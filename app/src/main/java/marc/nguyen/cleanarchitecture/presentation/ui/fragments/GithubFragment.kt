@@ -10,9 +10,9 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
-import arrow.core.getOrHandle
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
+import marc.nguyen.cleanarchitecture.core.result.doOnFailure
 import marc.nguyen.cleanarchitecture.databinding.GithubFragmentBinding
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
 import marc.nguyen.cleanarchitecture.presentation.viewmodels.GithubViewModel
@@ -44,10 +44,10 @@ class GithubFragment : Fragment() {
         viewModel.networkStatus.observe(
             viewLifecycleOwner,
             { result ->
-                result?.getOrHandle {
+                result?.doOnFailure { throwable ->
                     Toast.makeText(
                         context,
-                        it.localizedMessage,
+                        throwable.localizedMessage,
                         Toast.LENGTH_LONG
                     ).show()
                 }

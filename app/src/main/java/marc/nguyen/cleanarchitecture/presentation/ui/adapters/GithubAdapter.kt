@@ -15,7 +15,7 @@ class GithubAdapter(private val onClickListener: OnClickListener) :
             oldItem: Repo,
             newItem: Repo
         ): Boolean {
-            return oldItem === newItem
+            return oldItem == newItem
         }
 
         override fun areContentsTheSame(

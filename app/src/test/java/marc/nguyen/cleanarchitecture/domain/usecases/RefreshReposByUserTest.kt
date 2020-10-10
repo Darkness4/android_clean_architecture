@@ -1,7 +1,5 @@
 package marc.nguyen.cleanarchitecture.domain.usecases
 
-import arrow.core.getOrElse
-import arrow.core.getOrHandle
 import dagger.Lazy
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
@@ -32,8 +30,8 @@ class RefreshReposByUserTest : WordSpec({
             val result = refreshAllByUser("user")
 
             // Assert
-            result.isRight() shouldBe true
-            result.getOrElse { null } shouldBe Unit
+            result.isSuccess shouldBe true
+            result.valueOrNull() shouldBe Unit
         }
 
         "return failure on throw" {
@@ -44,10 +42,8 @@ class RefreshReposByUserTest : WordSpec({
             val result = refreshAllByUser("user")
 
             // Assert
-            result.isLeft() shouldBe true
-            result.getOrHandle {
-                it.shouldBeTypeOf<Exception>()
-            }
+            result.isFailure shouldBe true
+            result.exceptionOrNull().shouldBeTypeOf<Exception>()
         }
     }
 })

@@ -1,7 +1,5 @@
 package marc.nguyen.cleanarchitecture.domain.usecases
 
-import arrow.core.getOrElse
-import arrow.core.getOrHandle
 import dagger.Lazy
 import io.kotest.core.spec.style.WordSpec
 import io.kotest.matchers.shouldBe
@@ -38,8 +36,8 @@ class WatchReposByUserTest : WordSpec({
             val result = watchReposByUser("user").first()
 
             // Assert
-            result.isRight() shouldBe true
-            result.getOrElse { null } shouldBe repos
+            result.isSuccess shouldBe true
+            result.valueOrNull() shouldBe repos
         }
 
         "emit failure on empty cache" {
@@ -50,10 +48,8 @@ class WatchReposByUserTest : WordSpec({
             val result = watchReposByUser("user").first()
 
             // Assert
-            result.isLeft() shouldBe true
-            result.getOrHandle {
-                it.shouldBeTypeOf<CacheException>()
-            }
+            result.isFailure shouldBe true
+            result.exceptionOrNull().shouldBeTypeOf<CacheException>()
         }
 
         "emit failure on cache failure" {
@@ -66,10 +62,8 @@ class WatchReposByUserTest : WordSpec({
             val result = watchReposByUser("user").first()
 
             // Assert
-            result.isLeft() shouldBe true
-            result.getOrHandle {
-                it.shouldBeTypeOf<CacheException>()
-            }
+            result.isFailure shouldBe true
+            result.exceptionOrNull().shouldBeTypeOf<CacheException>()
         }
     }
 })

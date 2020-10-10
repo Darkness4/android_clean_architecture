@@ -6,10 +6,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import arrow.core.Either
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import marc.nguyen.cleanarchitecture.core.result.Result
 import marc.nguyen.cleanarchitecture.domain.usecases.RefreshReposByUser
 import marc.nguyen.cleanarchitecture.domain.usecases.WatchReposByUser
 import javax.inject.Inject
@@ -23,12 +23,12 @@ class GithubViewModel constructor(
         val watchReposByUser: Lazy<WatchReposByUser>
     )
 
-    private val _networkStatus = MutableLiveData<Either<Throwable, Unit>>()
-    val networkStatus: LiveData<Either<Throwable, Unit>>
+    private val _networkStatus = MutableLiveData<Result<Unit>>()
+    val networkStatus: LiveData<Result<Unit>>
         get() = _networkStatus
 
-    val state = interactors.watchReposByUser.get()(user)
-        .asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+    val state =
+        interactors.watchReposByUser.get()(user).asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
 
     private val _isManuallyRefreshing = MutableLiveData(false)
     val isManuallyRefreshing

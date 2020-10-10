@@ -4,57 +4,42 @@ import android.view.View
 import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
-import arrow.core.Either
-import arrow.core.getOrHandle
+import marc.nguyen.cleanarchitecture.core.result.Result
+import marc.nguyen.cleanarchitecture.core.result.doOnFailure
+import marc.nguyen.cleanarchitecture.core.result.doOnSuccess
 import marc.nguyen.cleanarchitecture.domain.entities.Repo
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
 
 @BindingAdapter("state")
 fun bindGithubAdapter(
     recyclerView: RecyclerView,
-    result: Either<Throwable, List<Repo>>?
+    result: Result<List<Repo>>?
 ) {
     val adapter = recyclerView.adapter as GithubAdapter
-    if (result != null) {
-        adapter.submitList(result.getOrHandle { emptyList() })
-    }
+    result?.let { adapter.submitList(it.valueOrNull() ?: emptyList()) }
 }
 
-@BindingAdapter("isLoading")
-fun showIfLoading(view: View, result: Either<Throwable, List<Repo>>?) {
-    view.visibility = if (result == null) View.VISIBLE else View.GONE
+@BindingAdapter("showOnLoading")
+fun showOnLoading(view: View, result: Result<List<Repo>>?) {
+    view.visibility = result?.let { View.GONE } ?: View.VISIBLE
 }
 
-@BindingAdapter("isLoaded")
-fun showIfLoaded(view: View, result: Either<Throwable, List<Repo>>?) {
-    view.visibility = result?.fold(
-        { View.GONE },
-        { View.VISIBLE }
-    ) ?: View.GONE
+@BindingAdapter("showOnValue")
+fun showOnValue(view: View, result: Result<List<Repo>>?) {
+    view.visibility = result?.doOnSuccess { View.VISIBLE } ?: View.GONE
 }
 
-@BindingAdapter("isError")
-fun showIfError(view: View, result: Either<Throwable, List<Repo>>?) {
-    view.visibility = result?.fold(
-        { View.VISIBLE },
-        { View.GONE }
-    ) ?: View.GONE
+@BindingAdapter("showOnError")
+fun showIfError(view: View, result: Result<List<Repo>>?) {
+    view.visibility = result?.doOnFailure { View.VISIBLE } ?: View.GONE
 }
 
-@BindingAdapter("isError")
-fun showIfError(view: TextView, result: Either<Throwable, List<Repo>>?) {
-    if (result != null) {
-        result.fold(
-            {
-                view.visibility = View.VISIBLE
-                view.text = it.localizedMessage
-            },
-            {
-                view.visibility = View.GONE
-                view.text = ""
-            }
-        )
-    } else {
+@BindingAdapter("showOnError")
+fun showIfError(view: TextView, result: Result<List<Repo>>?) {
+    result?.doOnFailure {
+        view.visibility = View.VISIBLE
+        view.text = it.localizedMessage
+    } ?: run {
         view.visibility = View.GONE
         view.text = ""
     }
