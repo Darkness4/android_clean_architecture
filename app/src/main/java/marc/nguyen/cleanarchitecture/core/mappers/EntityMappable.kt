@@ -1,5 +1,5 @@
 package marc.nguyen.cleanarchitecture.core.mappers
 
-interface DomainMappable<out R> {
+interface EntityMappable<out R> {
     fun asEntity(): R
 }

@@ -16,14 +16,18 @@ import javax.inject.Inject
 
 class GithubViewModel constructor(
     private val user: String,
-    private val refreshReposByUser: Lazy<RefreshReposByUser>,
-    watchReposByUser: Lazy<WatchReposByUser>
+    private val interactors: Interactors
 ) : ViewModel() {
+    class Interactors @Inject constructor(
+        val refreshReposByUser: Lazy<RefreshReposByUser>,
+        val watchReposByUser: Lazy<WatchReposByUser>
+    )
+
     private val _networkStatus = MutableLiveData<Either<Throwable, Unit>>()
     val networkStatus: LiveData<Either<Throwable, Unit>>
         get() = _networkStatus
 
-    val state = watchReposByUser.get()(user)
+    val state = interactors.watchReposByUser.get()(user)
         .asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
 
     private val _isManuallyRefreshing = MutableLiveData(false)
@@ -36,7 +40,7 @@ class GithubViewModel constructor(
 
     private fun refreshRepos() {
         viewModelScope.launch {
-            _networkStatus.value = refreshReposByUser.get()(user)
+            _networkStatus.value = interactors.refreshReposByUser.get()(user)
         }
     }
 
@@ -49,26 +53,13 @@ class GithubViewModel constructor(
         _isManuallyRefreshing.value = false
     }
 
-    class Factory @Inject constructor(
-        private val refreshReposByUser: Lazy<RefreshReposByUser>,
-        private val watchReposByUser: Lazy<WatchReposByUser>
-    ) {
-        fun create(user: String): GithubViewModel {
-            return GithubViewModel(
-                user,
-                refreshReposByUser,
-                watchReposByUser
-            )
-        }
-    }
-
-    class Provider(
-        private val factory: Factory,
+    class Factory(
+        private val interactors: Interactors,
         private val user: String
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return factory.create(user) as T
+            return GithubViewModel(user, interactors) as T
         }
     }
 }

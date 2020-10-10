@@ -13,9 +13,9 @@ import marc.nguyen.cleanarchitecture.presentation.viewmodels.GithubViewModel
 @InstallIn(FragmentComponent::class)
 object PresentationModule {
     @Provides
-    fun provideGithubViewModelFactory(
+    fun provideGithubViewModelInteractors(
         watchReposByUser: Lazy<WatchReposByUser>,
         refreshReposByUser: Lazy<RefreshReposByUser>
     ) =
-        GithubViewModel.Factory(refreshReposByUser, watchReposByUser)
+        GithubViewModel.Interactors(refreshReposByUser, watchReposByUser)
 }

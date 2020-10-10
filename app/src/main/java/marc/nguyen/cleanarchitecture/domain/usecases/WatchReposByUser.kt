@@ -4,8 +4,10 @@ import arrow.core.Either
 import arrow.core.Left
 import arrow.core.Right
 import dagger.Lazy
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import marc.nguyen.cleanarchitecture.core.exception.CacheException
 import marc.nguyen.cleanarchitecture.core.usecase.FlowUseCase
@@ -28,5 +30,5 @@ class WatchReposByUser @Inject constructor(
             }
         }.catch {
             emit(Left(CacheException(it.message)))
-        }
+        }.flowOn(Dispatchers.IO)
 }

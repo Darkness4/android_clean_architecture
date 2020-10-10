@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import arrow.core.getOrHandle
+import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
 import marc.nguyen.cleanarchitecture.databinding.GithubFragmentBinding
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
@@ -22,10 +23,10 @@ class GithubFragment : Fragment() {
     private val args by navArgs<GithubFragmentArgs>()
 
     @Inject
-    lateinit var viewModelFactory: GithubViewModel.Factory
+    lateinit var viewModelInteractors: Lazy<GithubViewModel.Interactors>
 
     private val viewModel by viewModels<GithubViewModel> {
-        GithubViewModel.Provider(viewModelFactory, args.user)
+        GithubViewModel.Factory(viewModelInteractors.get(), args.user)
     }
 
     override fun onCreateView(
@@ -37,11 +38,9 @@ class GithubFragment : Fragment() {
         val binding: GithubFragmentBinding = GithubFragmentBinding.inflate(inflater)
         binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = viewModel
-        binding.repoList.adapter = GithubAdapter(
-            GithubAdapter.OnClickListener {
-                openHtmlUrl(it.htmlUrl)
-            }
-        )
+        binding.repoList.adapter = GithubAdapter {
+            openHtmlUrl(it.htmlUrl)
+        }
         viewModel.networkStatus.observe(
             viewLifecycleOwner,
             { result ->

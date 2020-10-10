@@ -35,8 +35,8 @@ class GithubAdapter(private val onClickListener: OnClickListener) :
         }
     }
 
-    class OnClickListener(val clickListener: (repo: Repo) -> Unit) {
-        fun onClick(repo: Repo) = clickListener(repo)
+    fun interface OnClickListener {
+        fun onClick(repo: Repo)
     }
 
     override fun onCreateViewHolder(
