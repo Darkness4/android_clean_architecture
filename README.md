@@ -14,23 +14,21 @@ See [**build.gradle**](./app/build.gradle) for more details.
 
 ### Dependencies
 
-- Kotlin `1.4.0`
-- Android Gradle Plugin `4.0.1` + Databinding enabled
-- Arrow Kt Core `0.10.5` (Functional Programming Library)
-- Hilt `2.28.3-alpha` (DI Library based on Dagger 2)
-- Multidex `2.0.1` (Avoid the 64K methods limit)
-- Kotlin Coroutines `1.3.9`
-- Android KTX `1.3.1`
+- Kotlin `1.4.10`
+- Kotlin Coroutines `1.4.0`
+- Kotlin Serialization `1.0.0`
+- Android Gradle Plugin `4.1.0` + DataBinding enabled
+- Hilt `2.29.1-alpha` (DI Library based on Dagger 2)
+- Android KTX `1.3.2`
 - Room KTX `2.2.5`
 - Lifecycle KTX (LiveData + ViewModel) `2.2.0`
 - Fragment KTX `1.2.5`
-- Navigation KTX + SafeArgs `2.3.0`
+- Navigation KTX + SafeArgs `2.3.1`
 - Retrofit `2.9.0` (HTTP Client for APIs)
-- Moshi `1.9.3` (JSON Parser)
 
 ### Test dependencies
 
-- Kotest `4.2.0` + JUnit 5
+- Kotest `4.3.0` + JUnit 5
 - MockK `1.10.0`
 
 ### Instrumented test dependencies
@@ -132,8 +130,12 @@ object DataModule {
     fun provideGithubDataSource(client: OkHttpClient): GithubDataSource {
         return Retrofit.Builder()
             .baseUrl(GithubDataSource.BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
-            .client(client)
+            .client(client.get())
+            .addConverterFactory(
+                Json { ignoreUnknownKeys = true }.asConverterFactory(
+                    GithubDataSource.CONTENT_TYPE.toMediaType()
+                )
+            )
             .build()
             .create(GithubDataSource::class.java)
     }
@@ -168,16 +170,16 @@ Example with `RepoModel` which is an entity for Room and can be parsed with Mosh
 
 ```kotlin
 @Entity(tableName = "repos")
-@JsonClass(generateAdapter = true)
+@Serializable
 data class RepoModel(
     @PrimaryKey
     val id: Int,
     val name: String,
-    @ColumnInfo(name = "full_name") @Json(name = "full_name") val fullName: String,
+    @ColumnInfo(name = "full_name") @SerialName("full_name") val fullName: String,
     @Embedded(prefix = "owner_") val owner: UserModel,
-    @ColumnInfo(name = "html_url") @Json(name = "html_url") val htmlUrl: String,
+    @ColumnInfo(name = "html_url") @SerialName("html_url") val htmlUrl: String,
     val description: String?
-) : DomainMappable<Repo> {
+) : EntityMappable<Repo> {
     override fun asEntity(): Repo =
         Repo(
             id = this.id,
@@ -280,11 +282,13 @@ So, you may want to write the tests first before writing your use case :
 
 ```kotlin
 class RefreshReposByUserTest : WordSpec({
+    val repoRepositoryLazy = mockk<Lazy<RepoRepository>>()
     val repoRepository = mockk<RepoRepository>()
-    val refreshAllByUser: UseCase<String, Unit> = RefreshReposByUser(repoRepository)
+    val refreshAllByUser: UseCase<String, Unit> = RefreshReposByUser(repoRepositoryLazy)
 
     beforeTest {
         clearAllMocks()
+        every { repoRepositoryLazy.get() } returns repoRepository
     }
 
     "invoke" should {
@@ -296,8 +300,8 @@ class RefreshReposByUserTest : WordSpec({
             val result = refreshAllByUser("user")
 
             // Assert
-            result.isRight() shouldBe true
-            result.getOrElse { null } shouldBe Unit
+            result.isSuccess shouldBe true
+            result.valueOrNull() shouldBe Unit
         }
 
         "return failure on throw" {
@@ -308,10 +312,8 @@ class RefreshReposByUserTest : WordSpec({
             val result = refreshAllByUser("user")
 
             // Assert
-            result.isLeft() shouldBe true
-            result.getOrHandle {
-                it.shouldBeTypeOf<Exception>()
-            }
+            result.isFailure shouldBe true
+            result.exceptionOrNull().shouldBeTypeOf<Exception>()
         }
     }
 })
@@ -321,13 +323,15 @@ Then, you should implement the use case :
 
 ```kotlin
 @Singleton
-class RefreshReposByUser @Inject constructor(private val repoRepository: RepoRepository) :
+class RefreshReposByUser @Inject constructor(private val repoRepository: Lazy<RepoRepository>) :
     UseCase<String, Unit> {
-    override suspend operator fun invoke(params: String): Either<Throwable, Unit> =
-        try {
-            Right(repoRepository.refreshAllByUser(params))
-        } catch (e: Throwable) {
-            Left(e)
+    override suspend operator fun invoke(params: String): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            try {
+                Result.Success(repoRepository.get().refreshAllByUser(params))
+            } catch (e: Throwable) {
+                Result.Failure(e)
+            }
         }
 }
 ```
@@ -336,7 +340,7 @@ Note : This implement a `FlowUsecase` which is :
 
 ```kotlin
 interface FlowUseCase<in Params, out Type> {
-    operator fun invoke(params: Params): Flow<Either<Throwable, Type>>
+    operator fun invoke(params: Params): Flow<Result<Type>>
 }
 ```
 
@@ -344,9 +348,7 @@ If this is a simple call, like a simple `UpdateRepo`, you may prefer to implemen
 
 ```kotlin
 interface UseCase<in Params, out Type> {
-    suspend operator fun invoke(params: Params): Either<Throwable, Type>
-
-    object None
+    suspend operator fun invoke(params: Params): Result<Type>
 }
 ```
 
@@ -366,10 +368,10 @@ class GithubFragment : Fragment() {
     private val args by navArgs<GithubFragmentArgs>()
 
     @Inject
-    lateinit var githubViewModelAssistedFactory: GithubViewModel.AssistedFactory
+    lateinit var viewModelInteractors: Lazy<GithubViewModel.Interactors>
 
     private val viewModel by viewModels<GithubViewModel> {
-        GithubViewModel.provideFactory(githubViewModelAssistedFactory, args.user)
+        GithubViewModel.Factory(viewModelInteractors.get(), args.user)
     }
 
     override fun onCreateView(
@@ -381,19 +383,22 @@ class GithubFragment : Fragment() {
         val binding: GithubFragmentBinding = GithubFragmentBinding.inflate(inflater)
         binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = viewModel
-        binding.repoList.adapter = GithubAdapter(GithubAdapter.OnClickListener {
+        binding.repoList.adapter = GithubAdapter {
             openHtmlUrl(it.htmlUrl)
-        })
-        viewModel.networkStatus.observe(viewLifecycleOwner, Observer { result ->
-            result?.getOrHandle {
-                Toast.makeText(
-                    context,
-                    it.localizedMessage,
-                    Toast.LENGTH_LONG
-                ).show()
+        }
+        viewModel.networkStatus.observe(
+            viewLifecycleOwner,
+            { result ->
+                result?.doOnFailure { throwable ->
+                    Toast.makeText(
+                        context,
+                        throwable.localizedMessage,
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                viewModel.manualRefreshDone()
             }
-            viewModel.manualRefreshDone()
-        })
+        )
 
         return binding.root
     }
@@ -470,22 +475,26 @@ You should also check the [Binding Adapters](./app/src/main/java/marc/nguyen/cle
 
 #### ViewModels
 
-For the ViewModels, we use `AssistedInject` to partially inject the dependencies, because we need the `user` in the constructor of the viewmodel.
+For the ViewModels, we use an `Factory` to partially inject the dependencies, because we need the `user` in the constructor of the viewmodel.
 
 We convert the `Flow` into `LiveData`. We also use a `MutableLiveData` for managing the `Loading` and `Error` state.
 
 ```kotlin
-class GithubViewModel @AssistedInject constructor(
-    @Assisted private val user: String,
-    private val refreshReposByUser: RefreshReposByUser,
-    watchReposByUser: WatchReposByUser
+class GithubViewModel constructor(
+    private val user: String,
+    private val interactors: Interactors
 ) : ViewModel() {
-    private val _networkStatus = MutableLiveData<Either<Throwable, Unit>>()
-    val networkStatus: LiveData<Either<Throwable, Unit>>
+    class Interactors @Inject constructor(
+        val refreshReposByUser: Lazy<RefreshReposByUser>,
+        val watchReposByUser: Lazy<WatchReposByUser>
+    )
+
+    private val _networkStatus = MutableLiveData<Result<Unit>>()
+    val networkStatus: LiveData<Result<Unit>>
         get() = _networkStatus
 
-    val state = watchReposByUser(user)
-        .asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
+    val state =
+        interactors.watchReposByUser.get()(user).asLiveData(Dispatchers.Default + viewModelScope.coroutineContext)
 
     private val _isManuallyRefreshing = MutableLiveData(false)
     val isManuallyRefreshing
@@ -497,7 +506,7 @@ class GithubViewModel @AssistedInject constructor(
 
     private fun refreshRepos() {
         viewModelScope.launch {
-            _networkStatus.value = refreshReposByUser(user)
+            _networkStatus.value = interactors.refreshReposByUser.get()(user)
         }
     }
 
@@ -510,32 +519,31 @@ class GithubViewModel @AssistedInject constructor(
         _isManuallyRefreshing.value = false
     }
 
-    @AssistedInject.Factory
-    interface AssistedFactory {
-        fun create(user: String): GithubViewModel
-    }
-
-    companion object {
-        fun provideFactory(
-            assistedFactory: AssistedFactory,
-            user: String
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-                return assistedFactory.create(user) as T
-            }
+    class Factory(
+        private val interactors: Interactors,
+        private val user: String
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            return GithubViewModel(user, interactors) as T
         }
     }
 }
 ```
 
-If we use assisted injection, we must declare a `AssistedModule` :
+We must declare an `PresentationModule` to inject the interactors :
 
 ```kotlin
+@Module
 @InstallIn(FragmentComponent::class)
-@AssistedModule
-@Module(includes = [AssistedInject_AssistedInjectModule::class])
-interface AssistedInjectModule {}
+object PresentationModule {
+    @Provides
+    fun provideGithubViewModelInteractors(
+        watchReposByUser: Lazy<WatchReposByUser>,
+        refreshReposByUser: Lazy<RefreshReposByUser>
+    ) =
+        GithubViewModel.Interactors(refreshReposByUser, watchReposByUser)
+}
 ```
 
 Since we only use one ViewModel per Fragment, we can use `@InstallIn(FragmentComponent::class)`.

@@ -17,28 +17,28 @@ sealed class Result<out T> {
         return if (this is Failure) throwable
         else null
     }
-}
 
-inline fun <R, T> Result<T>.doOnSuccess(
-    onSuccess: (value: T) -> R,
-): R? {
-    return if (this is Result.Success) onSuccess(value)
-    else null
-}
+    fun <R> doOnSuccess(
+        onSuccess: (value: T) -> R,
+    ): R? {
+        return if (this is Success) onSuccess(value)
+        else null
+    }
 
-inline fun <R, T> Result<T>.doOnFailure(
-    onFailure: (exception: Throwable) -> R
-): R? {
-    return if (this is Result.Failure) onFailure(throwable)
-    else null
-}
+    fun <R> doOnFailure(
+        onFailure: (exception: Throwable) -> R
+    ): R? {
+        return if (this is Failure) onFailure(throwable)
+        else null
+    }
 
-inline fun <R, T> Result<T>.fold(
-    onSuccess: (value: T) -> R,
-    onFailure: (exception: Throwable) -> R
-): R {
-    return when (this) {
-        is Result.Success -> onSuccess(value)
-        is Result.Failure -> onFailure(throwable)
+    inline fun <R> fold(
+        onSuccess: (value: T) -> R,
+        onFailure: (exception: Throwable) -> R
+    ): R {
+        return when (this) {
+            is Success -> onSuccess(value)
+            is Failure -> onFailure(throwable)
+        }
     }
 }

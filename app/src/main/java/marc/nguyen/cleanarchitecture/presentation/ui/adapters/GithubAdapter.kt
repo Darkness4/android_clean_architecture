@@ -11,26 +11,19 @@ import marc.nguyen.cleanarchitecture.domain.entities.Repo
 class GithubAdapter(private val onClickListener: OnClickListener) :
     ListAdapter<Repo, GithubAdapter.ViewHolder>(DiffCallback) {
     companion object DiffCallback : DiffUtil.ItemCallback<Repo>() {
-        override fun areItemsTheSame(
-            oldItem: Repo,
-            newItem: Repo
-        ): Boolean {
-            return oldItem == newItem
-        }
+        override fun areItemsTheSame(oldItem: Repo, newItem: Repo) = oldItem.id == newItem.id
 
-        override fun areContentsTheSame(
-            oldItem: Repo,
-            newItem: Repo
-        ): Boolean {
-            return oldItem.id == newItem.id
-        }
+        override fun areContentsTheSame(oldItem: Repo, newItem: Repo) = oldItem == newItem
     }
 
     class ViewHolder(
         private var binding: GithubRepoItemBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(repo: Repo) {
+        fun bind(repo: Repo, onClickListener: OnClickListener) {
             binding.repo = repo
+            binding.repoCard.setOnClickListener {
+                onClickListener.onClick(repo)
+            }
             binding.executePendingBindings()
         }
     }
@@ -54,9 +47,6 @@ class GithubAdapter(private val onClickListener: OnClickListener) :
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val repo = getItem(position)
-        holder.itemView.setOnClickListener {
-            onClickListener.onClick(repo)
-        }
-        holder.bind(repo)
+        holder.bind(repo, onClickListener)
     }
 }

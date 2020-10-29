@@ -12,7 +12,6 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import dagger.Lazy
 import dagger.hilt.android.AndroidEntryPoint
-import marc.nguyen.cleanarchitecture.core.result.doOnFailure
 import marc.nguyen.cleanarchitecture.databinding.GithubFragmentBinding
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
 import marc.nguyen.cleanarchitecture.presentation.viewmodels.GithubViewModel

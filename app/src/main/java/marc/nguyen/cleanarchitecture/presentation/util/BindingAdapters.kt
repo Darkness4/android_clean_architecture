@@ -5,8 +5,6 @@ import android.widget.TextView
 import androidx.databinding.BindingAdapter
 import androidx.recyclerview.widget.RecyclerView
 import marc.nguyen.cleanarchitecture.core.result.Result
-import marc.nguyen.cleanarchitecture.core.result.doOnFailure
-import marc.nguyen.cleanarchitecture.core.result.doOnSuccess
 import marc.nguyen.cleanarchitecture.domain.entities.Repo
 import marc.nguyen.cleanarchitecture.presentation.ui.adapters.GithubAdapter
 
